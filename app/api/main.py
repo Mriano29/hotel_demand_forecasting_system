@@ -1,27 +1,44 @@
-from fastapi import FastAPI
-from schemas import CancellationInput, OccupancyInput
-from models_loader import cancellation_model, occupancy_model
+from fastapi import FastAPI, UploadFile, File
+import pandas as pd
+
+from services.preprocessing import build_features
+from services.predictions import predict
 
 app = FastAPI()
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
-
 
 @app.post("/predict/cancellations")
-def predict_cancellations(data: CancellationInput):
+async def predict_csv(file: UploadFile = File(...)):
 
-    features = [[data.lead_time, data.price, data.hotel_id]]
-    prob = cancellation_model.predict_proba(features)[0][1]
+    # 1. leer CSV
+    df = pd.read_csv(file.file)
 
-    return {"cancellation_probability": float(prob)}
+    # 2. features
+    X = build_features(df)
 
+    # 3. predicción (0 = no cancel, 1 = cancel)
+    preds = predict(X)
 
-@app.post("/predict/occupancy")
-def predict_occupancy(data: OccupancyInput):
+    # -------------------------
+    # KPIs base
+    # -------------------------
+    total_rows = len(df)
+    total_cancelled = int(preds.sum())
+    total_confirmed = total_rows - total_cancelled
 
-    features = [[data.hotel_id]]
-    pred = occupancy_model.predict(features)[0]
+    cancellation_rate = float(preds.mean())
+    occupancy_rate = float(1 - cancellation_rate)
 
-    return {"occupancy": float(pred)}
+    # -------------------------
+    # OUTPUT KPI DASHBOARD
+    # -------------------------
+    return {
+        "summary": {
+            "total_rows": total_rows,
+            "total_cancelled": total_cancelled,
+            "total_confirmed": total_confirmed,
+
+            "cancellation_rate": cancellation_rate,
+            "occupancy_rate": occupancy_rate,
+        }
+    }

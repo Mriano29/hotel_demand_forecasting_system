@@ -1,8 +1,11 @@
 fastapi
 uvicorn
-joblib
+pandas
 numpy
 scikit-learn
-pydantic
+joblib
 xgboost
 lightgbm
+python-multipart
+python-dotenv
+supabase==2.5.0 --no-deps

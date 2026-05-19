@@ -1,22 +1,14 @@
-from pathlib import Path
 import joblib
+import os
 
-# raíz del proyecto (hotel_demand_forecasting_system)
-BASE_DIR = Path(__file__).resolve().parents[2]
-
-print("BASE_DIR:", BASE_DIR)
-
-# carpeta real de modelos
-MODEL_DIR = BASE_DIR / "ml" / "models" / "cancellations"
-
-print("MODEL_DIR:", MODEL_DIR)
-
-print("ARCHIVOS:", list(MODEL_DIR.iterdir()))
-
-cancellation_model = joblib.load(
-    MODEL_DIR / "xgboost_cancelation_model.pkl"
+# sube desde: app/api/models_loader.py → app → root
+BASE_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "../..")
 )
 
-occupancy_model = joblib.load(
-    BASE_DIR / "ml" / "models" / "occupancy" / "occupancy_model.pkl"
+MODEL_PATH = os.path.join(
+    BASE_DIR,
+    "ml/models/cancellations/xgboost_cancelation_model.pkl"
 )
+
+model = joblib.load(MODEL_PATH)
